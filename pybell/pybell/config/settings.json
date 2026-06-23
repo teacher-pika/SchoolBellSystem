@@ -1,0 +1,83 @@
+{
+    "schedule": {
+        "classStart": [
+            "08:20",
+            "09:15",
+            "10:15",
+            "11:10",
+            "13:20",
+            "14:15",
+            "15:15",
+            "16:10"
+        ],
+        "classEnd": [
+            "09:10",
+            "10:05",
+            "11:05",
+            "12:00",
+            "14:10",
+            "15:05",
+            "16:05",
+            "17:00"
+        ]
+    },
+    "alarm_states": {
+        "start-0": true,
+        "start-1": true,
+        "start-2": true,
+        "start-3": true,
+        "start-4": true,
+        "start-5": true,
+        "start-6": true,
+        "start-7": true,
+        "end-0": true,
+        "end-1": true,
+        "end-2": true,
+        "end-3": true,
+        "end-4": true,
+        "end-5": true,
+        "end-6": true,
+        "end-7": true
+    },
+    "sound_lists": {
+        "start": [
+            {
+                "type": "url",
+                "value": "https://www.desh.hc.edu.tw/ischool/public/resource_view/open.php?file=1845edb62d768bb482efa8e2d80769b7.mp3",
+                "display": "預設上課鈴聲"
+            },
+            {
+                "type": "local",
+                "path": "C:/Users/desh204/Downloads/bell-ringing-05.mp3",
+                "display": "bell-ringing-05.mp3"
+            },
+            {
+                "type": "url",
+                "value": "a",
+                "display": "a"
+            },
+            {
+                "type": "url",
+                "value": "b",
+                "display": "b"
+            }
+        ],
+        "end": [
+            {
+                "type": "url",
+                "value": "https://www.desh.hc.edu.tw/ischool/public/resource_view/open.php?file=90f0daff67f12a99970436a11b43095a.mp3",
+                "display": "預設下課鈴聲"
+            }
+        ]
+    },
+    "play_modes": {
+        "start": "sequential",
+        "end": "sequential"
+    },
+    "audio_backend": "pygame",
+    "version": "1.0",
+    "play_counters": {
+        "start": 82,
+        "end": 0
+    }
+}

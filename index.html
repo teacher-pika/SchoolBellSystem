@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學校鬧鐘系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .status-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        #currentTime {
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+
+        .control-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+
+        .bell-grid {
+            display: grid;
+            /* 預設改為 8 欄 2 列 */
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .bell-button {
+            border: 2px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bell-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .bell-button.inactive {
+            opacity: 0.3;
+            background: #f0f0f0 !important;
+        }
+
+        .bell-button.inactive::after {
+            content: '✕';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2em;
+            color: rgba(0,0,0,0.3);
+        }
+
+        .period-label {
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 3px;
+            line-height: 1.2;
+        }
+
+        .period-time {
+            font-size: 0.8em;
+            opacity: 0.9;
+            line-height: 1.2;
+        }
+
+        /* 彩虹色系統 - 上課（淺色） */
+        .bell-button.start-0 { background: #ff6b6b; color: white; } /* 紅 */
+        .bell-button.start-1 { background: #ffa500; color: white; } /* 橙 */
+        .bell-button.start-2 { background: #ffd93d; color: #333; } /* 黃 */
+        .bell-button.start-3 { background: #6bcf7f; color: white; } /* 綠 */
+        .bell-button.start-4 { background: #4ecdc4; color: white; } /* 青 */
+        .bell-button.start-5 { background: #5e9cff; color: white; } /* 藍 */
+        .bell-button.start-6 { background: #a864fd; color: white; } /* 紫 */
+        .bell-button.start-7 { background: #8b8b8b; color: white; } /* 灰 */
+
+        /* 彩虹色系統 - 下課（深色） */
+        .bell-button.end-0 { background: #c92a2a; color: white; } /* 深紅 */
+        .bell-button.end-1 { background: #e67700; color: white; } /* 深橙 */
+        .bell-button.end-2 { background: #fcc419; color: #333; } /* 深黃 */
+        .bell-button.end-3 { background: #2f9e44; color: white; } /* 深綠 */
+        .bell-button.end-4 { background: #22b8cf; color: white; } /* 深青 */
+        .bell-button.end-5 { background: #1971c2; color: white; } /* 深藍 */
+        .bell-button.end-6 { background: #7048e8; color: white; } /* 深紫 */
+        .bell-button.end-7 { background: #495057; color: white; } /* 深灰 */
+
+        .sound-source-toggle {
+            margin-bottom: 10px;
+        }
+        .sound-source-toggle label {
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .playlist-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .playlist-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .playlist-list {
+            list-style: none;
+            padding-left: 0;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background: white;
+        }
+        .playlist-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .playlist-item:last-child {
+            border-bottom: none;
+        }
+        .playlist-item span {
+            word-break: break-all;
+            margin-right: 10px;
+        }
+
+        .playlist-item.playing-item {
+            background-color: #fff3cd;
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 500px;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .modal-body {
+            margin-bottom: 20px;
+        }
+        .modal-body > div {
+            margin-bottom: 15px;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .relink-container {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .relink-container p {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+
+        footer {
+            padding: 20px;
+            text-align: center;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+        }
+
+        .sound-settings {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .sound-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .sound-card h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+
+        input[type="url"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        input[type="url"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .test-section {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .test-section h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .log-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        #logContent {
+            font-family: monospace;
+            font-size: 12px;
+            color: #495057;
+        }
+
+        .log-entry {
+            padding: 5px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .triggered-indicator {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 8px;
+            height: 8px;
+            background: #ff0000;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 0, 0, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 0, 0, 0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 學校鬧鐘系統</h1>
+        
+        <div class="status-bar">
+            <div>現在時間：<span id="currentTime"></span></div>
+            <div>下次鬧鐘：<span id="nextAlarm">無</span></div>
+        </div>
+
+        <div class="control-section">
+            <h2 class="section-title">📅 節次控制面板</h2>
+            <div class="bell-grid" id="bellGrid">
+                <!-- 動態生成按鈕 -->
+            </div>
+            
+            <div class="control-buttons">
+                <button class="btn-primary" onclick="toggleAll(true)">全部啟用</button>
+                <button class="btn-secondary" onclick="toggleAll(false)">全部停用</button>
+                <button class="btn-success" onclick="toggleAllClass(true)">啟用所有上課鈴</button>
+                <button class="btn-success" onclick="toggleAllClass(false)">啟用所有下課鈴</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>⚡ 測試功能</h3>
+			<div class="control-buttons">
+				<button class="btn-danger" onclick="testNextAlarm()">立即測試下一個鬧鐘</button>
+				<button class="btn-info" onclick="stopSound()" style="background-color: #ffc107; color: black;">手動停止鈴聲</button>
+				<button class="btn-secondary" onclick="saveSettings()">儲存設定</button>
+				<button class="btn-secondary" onclick="loadSettings()">載入設定</button>
+			</div>
+        </div>
+        
+        <div class="playlist-section">
+            <h2 class="section-title">🎵 鈴聲播放清單</h2>
+            <div id="relinkContainer" class="relink-container" style="display: none;">
+                <button id="relinkAllBtn" class="btn-info">全部重新連結</button>
+                <p>提醒：您可以按住 Shift 或 Ctrl 鍵來一次選取多個檔案。</p>
+            </div>
+            <div class="sound-settings">
+                <div class="sound-card">
+                    <h3>上課鈴聲</h3>
+                    <div class="playlist-controls">
+                        <button class="btn-primary" onclick="addSound('start')">新增鈴聲</button>
+                        <div>
+                            <label><input type="radio" name="start_play_mode" value="sequential" checked> 順序播放</label>
+                            <label><input type="radio" name="start_play_mode" value="random"> 隨機播放</label>
+                        </div>
+                        <button class="btn-info" onclick="testSound('start')">測試播放</button>
+                    </div>
+                    <ul id="startSoundList" class="playlist-list"></ul>
+                </div>
+                <div class="sound-card">
+                    <h3>下課鈴聲</h3>
+                    <div class="playlist-controls">
+                        <button class="btn-primary" onclick="addSound('end')">新增鈴聲</button>
+                        <div>
+                            <label><input type="radio" name="end_play_mode" value="sequential" checked> 順序播放</label>
+                            <label><input type="radio" name="end_play_mode" value="random"> 隨機播放</label>
+                        </div>
+                        <button class="btn-info" onclick="testSound('end')">測試播放</button>
+                    </div>
+                    <ul id="endSoundList" class="playlist-list"></ul>
+                </div>
+            </div>
+        </div>
+
+		<div class="log-section">
+			<h3>📋 系統日誌</h3>
+			<div id="logContent"></div>
+		</div>
+    </div>
+
+    <footer>
+        powered by 皮卡賴 with Gemini
+    </footer>
+
+    <div id="addSoundModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <h2>新增鈴聲</h2>
+            <div class="modal-body">
+                <div>
+                    <label><input type="radio" name="modal_sound_source" value="url"> 網路來源url</label>
+                    <label><input type="radio" name="modal_sound_source" value="local" checked> 本機檔案</label>
+                </div>
+                <div id="modalUrlInputContainer" style="display: none;">
+                    <input type="url" id="modalSoundUrl" placeholder="請輸入 MP3 網址" style="width: 100%;">
+                </div>
+                <div id="modalFileInputContainer">
+                    <label for="modalSoundFile" class="btn-secondary" style="padding: 10px 15px; cursor: pointer;">選擇檔案</label>
+                    <input type="file" id="modalSoundFile" accept="audio/*" style="display: none;">
+                    <span id="modalFileName" style="margin-left: 10px;">未選擇任何檔案</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" id="modalConfirmBtn">確定</button>
+                <button class="btn-secondary" id="modalCancelBtn">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <audio id="audioPlayer"></audio>
+
+    <script>
+        // 時段定義
+        const schedule = {
+            classStart: ['08:20', '09:15', '10:15', '11:10', '13:20', '14:15', '15:15', '16:10'],
+            classEnd: ['09:10', '10:05', '11:05', '12:00', '14:10', '15:05', '16:05', '17:00']
+        };
+
+        // 鬧鐘狀態
+        let alarmStates = {};
+        let checkInterval;
+        let triggeredAlarms = {}; // 記錄已觸發的鬧鐘，避免重複觸發
+        
+        let soundLists = { start: [], end: [] };
+        let playCounters = { start: 0, end: 0 };
+        let playModes = { start: 'sequential', end: 'sequential' };
+        let currentAddSoundType = null; // To track which list we're adding to
+
+        // 初始化
+        function init() {
+            // 預設以 8x2 的版面生成，並設定響應式
+            setResponsiveLayout();
+            window.addEventListener('resize', debounce(setResponsiveLayout));
+
+            setupPlaylistControls();
+            setupModal();
+            setupRelinkAll();
+            loadSettings();
+            updateTime();
+            startAlarmCheck();
+            addLog('系統啟動完成');
+        }
+
+        function setupRelinkAll() {
+            document.getElementById('relinkAllBtn').addEventListener('click', () => {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'audio/*';
+                fileInput.multiple = true;
+                
+                fileInput.onchange = (e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                        const selectedFiles = new Map();
+                        for (const file of e.target.files) {
+                            selectedFiles.set(file.name, file);
+                        }
+
+                        let relinkedCount = 0;
+                        ['start', 'end'].forEach(type => {
+                            soundLists[type].forEach(sound => {
+                                if (sound.needsRelink && selectedFiles.has(sound.display)) {
+                                    sound.file = selectedFiles.get(sound.display);
+                                    sound.needsRelink = false;
+                                    relinkedCount++;
+                                }
+                            });
+                        });
+                        
+                        renderPlaylist('start');
+                        renderPlaylist('end');
+                        updateRelinkButtonVisibility();
+                        addLog(`成功重新連結 ${relinkedCount} 個檔案`);
+                    }
+                };
+
+                fileInput.click();
+            });
+        }
+
+        function setupModal() {
+            const modal = document.getElementById('addSoundModal');
+            const urlInputContainer = document.getElementById('modalUrlInputContainer');
+            const fileInputContainer = document.getElementById('modalFileInputContainer');
+            const urlRadio = document.querySelector('input[name="modal_sound_source"][value="url"]');
+            const localRadio = document.querySelector('input[name="modal_sound_source"][value="local"]');
+            const cancelBtn = document.getElementById('modalCancelBtn');
+            const confirmBtn = document.getElementById('modalConfirmBtn');
+            const urlInput = document.getElementById('modalSoundUrl');
+            const fileInput = document.getElementById('modalSoundFile');
+            const fileNameSpan = document.getElementById('modalFileName');
+
+            urlRadio.addEventListener('change', () => {
+                urlInputContainer.style.display = 'block';
+                fileInputContainer.style.display = 'none';
+            });
+            localRadio.addEventListener('change', () => {
+                urlInputContainer.style.display = 'none';
+                fileInputContainer.style.display = 'block';
+            });
+            
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files && fileInput.files.length > 0) {
+                    fileNameSpan.textContent = fileInput.files[0].name;
+                } else {
+                    fileNameSpan.textContent = '未選擇任何檔案';
+                }
+            });
+            
+            cancelBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            confirmBtn.addEventListener('click', () => {
+                if (!currentAddSoundType) return;
+
+                const sourceType = document.querySelector('input[name="modal_sound_source"]:checked').value;
+
+                if (sourceType === 'url') {
+                    const url = urlInput.value;
+                    if (url) {
+                        soundLists[currentAddSoundType].push({ type: 'url', value: url, display: url });
+                        renderPlaylist(currentAddSoundType);
+                    } else {
+                        alert('請輸入網址');
+                        return;
+                    }
+                } else { // local file
+                    if (fileInput.files && fileInput.files[0]) {
+                        const file = fileInput.files[0];
+                        soundLists[currentAddSoundType].push({ type: 'local', file: file, display: file.name });
+                        renderPlaylist(currentAddSoundType);
+                    } else {
+                        alert('請選擇檔案');
+                        return;
+                    }
+                }
+                
+                modal.style.display = 'none';
+                urlInput.value = '';
+                fileInput.value = '';
+                fileNameSpan.textContent = '未選擇任何檔案';
+            });
+        }
+
+        function setupPlaylistControls() {
+            document.querySelector('input[name="start_play_mode"][value="sequential"]').addEventListener('change', () => playModes.start = 'sequential');
+            document.querySelector('input[name="start_play_mode"][value="random"]').addEventListener('change', () => playModes.start = 'random');
+            document.querySelector('input[name="end_play_mode"][value="sequential"]').addEventListener('change', () => playModes.end = 'sequential');
+            document.querySelector('input[name="end_play_mode"][value="random"]').addEventListener('change', () => playModes.end = 'random');
+        }
+
+        function addSound(type) {
+            currentAddSoundType = type;
+            const modal = document.getElementById('addSoundModal');
+            modal.style.display = 'flex';
+            // Set default to local
+            document.querySelector('input[name="modal_sound_source"][value="local"]').checked = true;
+            document.getElementById('modalUrlInputContainer').style.display = 'none';
+            document.getElementById('modalFileInputContainer').style.display = 'block';
+            // Reset file name display
+            document.getElementById('modalFileName').textContent = '未選擇任何檔案';
+            document.getElementById('modalSoundFile').value = '';
+            document.getElementById('modalSoundUrl').value = '';
+        }
+
+        function removeSound(type, index) {
+            soundLists[type].splice(index, 1);
+            renderPlaylist(type);
+        }
+
+        function relinkSound(type, index) {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'audio/*';
+            fileInput.onchange = (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    soundLists[type][index].file = file;
+                    soundLists[type][index].needsRelink = false;
+                    soundLists[type][index].display = file.name;
+                    renderPlaylist(type);
+                    addLog(`重新連結檔案: ${file.name}`);
+                }
+            };
+            fileInput.click();
+        }
+
+        function renderPlaylist(type) {
+            const listElement = document.getElementById(`${type}SoundList`);
+            listElement.innerHTML = '';
+            soundLists[type].forEach((sound, index) => {
+                const item = document.createElement('li');
+                item.className = 'playlist-item';
+                item.id = `playlist-item-${type}-${index}`;
+                
+                if (sound.needsRelink) {
+                    item.innerHTML = `
+                        <span>${sound.display} (未載入)</span>
+                        <div>
+                            <button class="btn-info" style="padding: 5px 10px;" onclick="relinkSound('${type}', ${index})">連結</button>
+                            <button class="btn-danger" style="padding: 5px 10px;" onclick="removeSound('${type}', ${index})">刪除</button>
+                        </div>
+                    `;
+                } else {
+                    item.innerHTML = `
+                        <span>${sound.display}</span>
+                        <button class="btn-danger" style="padding: 5px 10px;" onclick="removeSound('${type}', ${index})">刪除</button>
+                    `;
+                }
+                listElement.appendChild(item);
+            });
+        }
+        
+        function updateRelinkButtonVisibility() {
+            const needsRelink = soundLists.start.some(s => s.needsRelink) || soundLists.end.some(s => s.needsRelink);
+            document.getElementById('relinkContainer').style.display = needsRelink ? 'block' : 'none';
+        }
+
+        // 根據視窗寬度設定響應式版面
+        function setResponsiveLayout() {
+            const width = window.innerWidth;
+            // 記錄當前的 grid 狀態，避免不必要的重繪
+            const grid = document.getElementById('bellGrid');
+            const currentCols = grid.style.gridTemplateColumns.split(' ').length;
+
+            if (width > 1100 && currentCols !== 8) {
+                generateBellGrid(8, 2);
+            } else if (width > 600 && width <= 1100 && currentCols !== 4) {
+                generateBellGrid(4, 4);
+            } else if (width <= 600 && currentCols !== 2) {
+                generateBellGrid(2, 8);
+            }
+        }
+
+        // Debounce 函式，防止 resize 事件過於頻繁觸發
+        function debounce(func, delay = 150) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        // 生成按鈕網格並排序
+        function generateBellGrid(cols, rows) {
+            const grid = document.getElementById('bellGrid');
+            grid.innerHTML = ''; // 清空現有按鈕
+            const buttons = [];
+
+            // 根據不同的版面需求，決定按鈕的生成順序
+            if (cols === 8 && rows === 2) {
+                // 8x2: 第一列為上課，第二列為下課
+                for (let i = 0; i < 8; i++) {
+                    buttons.push(createBellButton(i, 'start', schedule.classStart[i]));
+                }
+                for (let i = 0; i < 8; i++) {
+                    buttons.push(createBellButton(i, 'end', schedule.classEnd[i]));
+                }
+            } else if (cols === 2 && rows === 8) {
+                // 2x8: col1為上課, col2為下課
+                for (let i = 0; i < 8; i++) {
+                    buttons.push(createBellButton(i, 'start', schedule.classStart[i]));
+                    buttons.push(createBellButton(i, 'end', schedule.classEnd[i]));
+                }
+            } else if (cols === 4 && rows === 4) {
+                // 4x4: col1(上課1-4), col2(上課5-8), col3(下課1-4), col4(下課5-8)
+                const col1 = [], col2 = [], col3 = [], col4 = [];
+                for (let i = 0; i < 4; i++) col1.push(createBellButton(i, 'start', schedule.classStart[i]));
+                for (let i = 4; i < 8; i++) col2.push(createBellButton(i, 'start', schedule.classStart[i]));
+                for (let i = 0; i < 4; i++) col3.push(createBellButton(i, 'end', schedule.classEnd[i]));
+                for (let i = 4; i < 8; i++) col4.push(createBellButton(i, 'end', schedule.classEnd[i]));
+                
+                // 根據 CSS Grid 的填充順序（先填滿橫列），交叉排列按鈕
+                for (let i = 0; i < 4; i++) {
+                    buttons.push(col1[i]);
+                    buttons.push(col2[i]);
+                    buttons.push(col3[i]);
+                    buttons.push(col4[i]);
+                }
+            }
+
+            // 將排序好的按鈕加入到網格中
+            buttons.forEach(button => grid.appendChild(button));
+
+            // 同時更新網格的 CSS 樣式
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+        }
+
+        // 創建單個按鈕
+        function createBellButton(index, type, time) {
+            const button = document.createElement('div');
+            const key = `${type}-${index}`;
+            
+            if (alarmStates[key] === undefined) {
+                alarmStates[key] = true;
+            }
+
+            button.className = `bell-button ${type}-${index} ${alarmStates[key] ? '' : 'inactive'}`;
+            button.id = `bell-${type}-${index}`;
+
+            button.innerHTML = `
+                <div class="period-label">第${index + 1}節${type === 'start' ? '上課' : '下課'}</div>
+                <div class="period-time">${time}</div>
+            `;
+
+            button.onclick = () => toggleBell(key, button);
+            
+            return button;
+        }
+
+        // 切換單個鬧鐘
+        function toggleBell(key, button) {
+            alarmStates[key] = !alarmStates[key];
+            const [type, index] = key.split('-');
+            button.className = `bell-button ${type}-${index} ${alarmStates[key] ? '' : 'inactive'}`;
+            updateNextAlarm();
+            addLog(`${alarmStates[key] ? '啟用' : '停用'} ${key}`);
+        }
+
+        // 全部啟用/停用
+        function toggleAll(enable) {
+            Object.keys(alarmStates).forEach(key => {
+                alarmStates[key] = enable;
+                const [type, index] = key.split('-');
+                const button = document.getElementById(`bell-${type}-${index}`);
+                if (button) {
+                    button.className = `bell-button ${type}-${index} ${enable ? '' : 'inactive'}`;
+                }
+            });
+            updateNextAlarm();
+            addLog(`全部${enable ? '啟用' : '停用'}`);
+        }
+
+        // 切換所有上課或下課鈴
+        function toggleAllClass(isStart) {
+            const type = isStart ? 'start' : 'end';
+            for (let i = 0; i < 8; i++) {
+                const key = `${type}-${i}`;
+                alarmStates[key] = true;
+                const button = document.getElementById(`bell-${type}-${i}`);
+                if (button) {
+                    button.className = `bell-button ${type}-${i}`;
+                }
+            }
+            updateNextAlarm();
+            addLog(`啟用所有${isStart ? '上課' : '下課'}鈴`);
+        }
+
+        // 更新時間顯示
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
+            document.getElementById('currentTime').textContent = timeStr;
+            setTimeout(updateTime, 1000);
+        }
+
+        // 檢查鬧鐘
+        function startAlarmCheck() {
+            if (checkInterval) clearInterval(checkInterval);
+            
+            checkInterval = setInterval(() => {
+                const now = new Date();
+                const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                const currentSeconds = now.getSeconds();
+                
+                // 每分鐘開始時清除已觸發記錄
+                if (currentSeconds === 0) {
+                    triggeredAlarms = {};
+                }
+                
+                // 檢查上課時間
+                schedule.classStart.forEach((time, index) => {
+                    const alarmKey = `start-${index}-${time}`;
+                    if (time === currentTime && alarmStates[`start-${index}`] && !triggeredAlarms[alarmKey]) {
+                        triggeredAlarms[alarmKey] = true;
+                        playAlarm('start', index + 1);
+                    }
+                });
+                
+                // 檢查下課時間
+                schedule.classEnd.forEach((time, index) => {
+                    const alarmKey = `end-${index}-${time}`;
+                    if (time === currentTime && alarmStates[`end-${index}`] && !triggeredAlarms[alarmKey]) {
+                        triggeredAlarms[alarmKey] = true;
+                        playAlarm('end', index + 1);
+                    }
+                });
+                
+                updateNextAlarm();
+            }, 1000);
+        }
+
+        // 播放鬧鐘
+        function playAlarm(type, period) {
+            if (soundLists[type].length === 0) {
+                addLog(`播放失敗: ${type} 播放清單是空的`);
+                return;
+            }
+
+            let sound;
+            let index;
+            if (playModes[type] === 'random') {
+                index = Math.floor(Math.random() * soundLists[type].length);
+                sound = soundLists[type][index];
+            } else { // sequential
+                index = playCounters[type] % soundLists[type].length;
+                sound = soundLists[type][index];
+                playCounters[type]++;
+            }
+
+            if (sound.needsRelink) {
+                addLog(`播放失敗: ${sound.display} 未連結本機檔案`);
+                return;
+            }
+
+            let soundUrl;
+            if (sound.type === 'url') {
+                soundUrl = sound.value;
+            } else { // local
+                soundUrl = URL.createObjectURL(sound.file);
+            }
+            
+            if (!soundUrl) {
+                addLog(`播放失敗: ${type} 鈴聲未設定`);
+                return;
+            }
+
+            // Highlight and play
+            document.querySelectorAll('.playing-item').forEach(el => el.classList.remove('playing-item'));
+            const soundItemElement = document.getElementById(`playlist-item-${type}-${index}`);
+            if (soundItemElement) {
+                soundItemElement.classList.add('playing-item');
+            }
+
+            const audio = document.getElementById('audioPlayer');
+            audio.src = soundUrl;
+            audio.play().catch(e => {
+                console.error('播放失敗:', e);
+                addLog(`播放失敗: ${e.message}`);
+            });
+            
+            audio.onended = () => {
+                if (soundItemElement) {
+                    soundItemElement.classList.remove('playing-item');
+                }
+                if (sound.type === 'local' && soundUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(soundUrl);
+                }
+            };
+
+            const typeText = type === 'start' ? '上課' : '下課';
+            addLog(`🔔 第${period}節${typeText}鈴響 (${sound.display})`);
+            
+            // 顯示觸發指示器
+            const button = document.getElementById(`bell-${type}-${period-1}`);
+            if (button) {
+                const indicator = document.createElement('div');
+                indicator.className = 'triggered-indicator';
+                button.appendChild(indicator);
+                setTimeout(() => indicator.remove(), 5000);
+            }
+            
+            // 顯示通知（如果瀏覽器支援）
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(`第${period}節${typeText}`, {
+                    body: `現在是${typeText}時間`,
+                    icon: '🔔'
+                });
+            }
+        }
+
+        // 更新下次鬧鐘顯示
+        function updateNextAlarm() {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let nextAlarm = null;
+            let minDiff = 24 * 60;
+
+            // 檢查所有啟用的鬧鐘
+            Object.keys(alarmStates).forEach(key => {
+                if (!alarmStates[key]) return;
+                
+                const [type, index] = key.split('-');
+                const time = type === 'start' ? schedule.classStart[index] : schedule.classEnd[index];
+                const [hour, minute] = time.split(':').map(Number);
+                const alarmMinutes = hour * 60 + minute;
+                
+                let diff = alarmMinutes - currentMinutes;
+                if (diff < 0) diff += 24 * 60; // 隔天
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nextAlarm = `第${parseInt(index) + 1}節${type === 'start' ? '上課' : '下課'} (${time})`;
+                }
+            });
+
+            document.getElementById('nextAlarm').textContent = nextAlarm || '無';
+        }
+
+        // 測試音效
+        function testSound(type) {
+            if (soundLists[type].length === 0) {
+                alert(`${type} 播放清單是空的`);
+                return;
+            }
+
+            let sound;
+            let index;
+            if (playModes[type] === 'random') {
+                index = Math.floor(Math.random() * soundLists[type].length);
+                sound = soundLists[type][index];
+            } else { // sequential
+                index = playCounters[type] % soundLists[type].length;
+                sound = soundLists[type][index];
+                // 測試時也推進計數器，使其行為與實際響鈴一致
+                playCounters[type]++;
+            }
+
+            if (sound.needsRelink) {
+                alert(`${sound.display} 未連結本機檔案，無法測試播放。`);
+                return;
+            }
+
+            let soundUrl;
+            if (sound.type === 'url') {
+                soundUrl = sound.value;
+            } else { // local
+                soundUrl = URL.createObjectURL(sound.file);
+            }
+
+            if (!soundUrl) {
+                alert('無法獲取音訊來源！');
+                return;
+            }
+
+            // Highlight and play
+            document.querySelectorAll('.playing-item').forEach(el => el.classList.remove('playing-item'));
+            const soundItemElement = document.getElementById(`playlist-item-${type}-${index}`);
+            if (soundItemElement) {
+                soundItemElement.classList.add('playing-item');
+            }
+
+            const audio = document.getElementById('audioPlayer');
+            audio.src = soundUrl;
+            audio.play().catch(e => {
+                alert('播放失敗: ' + e.message);
+            });
+            
+            audio.onended = () => {
+                if (soundItemElement) {
+                    soundItemElement.classList.remove('playing-item');
+                }
+                if (sound.type === 'local' && soundUrl.startsWith('blob:')) {
+                    URL.revokeObjectURL(soundUrl);
+                }
+            };
+
+            addLog(`測試播放: ${type} 鈴聲 (${sound.display})`);
+        }
+
+        // 測試下一個鬧鐘
+        function testNextAlarm() {
+            const now = new Date();
+            const currentMinutes = now.getHours() * 60 + now.getMinutes();
+            let nextKey = null;
+            let minDiff = 24 * 60;
+
+            Object.keys(alarmStates).forEach(key => {
+                if (!alarmStates[key]) return;
+                
+                const [type, index] = key.split('-');
+                const time = type === 'start' ? schedule.classStart[index] : schedule.classEnd[index];
+                const [hour, minute] = time.split(':').map(Number);
+                const alarmMinutes = hour * 60 + minute;
+                
+                let diff = alarmMinutes - currentMinutes;
+                if (diff < 0) diff += 24 * 60;
+                
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    nextKey = key;
+                }
+            });
+
+            if (nextKey) {
+                const [type, index] = nextKey.split('-');
+                playAlarm(type, parseInt(index) + 1);
+            }
+        }
+		// 手動停止音效
+        function stopSound() {
+            const audio = document.getElementById('audioPlayer');
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0; // 將音訊重置到開頭
+                addLog('鈴聲已被手動停止');
+            }
+        }
+
+
+
+
+
+        // 儲存設定
+        function saveSettings() {
+            const serializableSoundLists = {
+                start: soundLists.start.map(s => {
+                    if (s.type === 'url') return s;
+                    return { type: 'local', display: s.display, needsRelink: true };
+                }),
+                end: soundLists.end.map(s => {
+                    if (s.type === 'url') return s;
+                    return { type: 'local', display: s.display, needsRelink: true };
+                })
+            };
+
+            const settings = {
+                alarmStates: alarmStates,
+                soundLists: serializableSoundLists,
+                playModes: playModes
+            };
+            localStorage.setItem('schoolBellSettings', JSON.stringify(settings));
+            addLog('設定已儲存');
+            alert('設定已儲存！(注意：本機檔案下次載入時需要重新連結)');
+        }
+
+        // 載入設定
+        function loadSettings() {
+            const saved = localStorage.getItem('schoolBellSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                alarmStates = settings.alarmStates || {};
+                
+                if(settings.soundLists) {
+                    soundLists.start = settings.soundLists.start || [];
+                    soundLists.end = settings.soundLists.end || [];
+                }
+                
+                // 修正：如果載入後清單是空的，就加入預設鈴聲
+                if (soundLists.start.length === 0) {
+                    soundLists.start.push({ 
+                        type: 'url', 
+                        value: 'https://www.desh.hc.edu.tw/ischool/public/resource_view/open.php?file=1845edb62d768bb482efa8e2d80769b7.mp3', 
+                        display: '預設上課鈴聲' 
+                    });
+                }
+                if (soundLists.end.length === 0) {
+                    soundLists.end.push({ 
+                        type: 'url', 
+                        value: 'https://www.desh.hc.edu.tw/ischool/public/resource_view/open.php?file=90f0daff67f12a99970436a11b43095a.mp3', 
+                        display: '預設下課鈴聲' 
+                    });
+                }
+
+                if(settings.playModes) {
+                    playModes = settings.playModes;
+                    document.querySelector(`input[name="start_play_mode"][value="${playModes.start}"]`).checked = true;
+                    document.querySelector(`input[name="end_play_mode"][value="${playModes.end}"]`).checked = true;
+                }
+
+                renderPlaylist('start');
+                renderPlaylist('end');
+                updateRelinkButtonVisibility();
+
+                // 更新按鈕狀態
+                Object.keys(alarmStates).forEach(key => {
+                    const [type, index] = key.split('-');
+                    const button = document.getElementById(`bell-${type}-${index}`);
+                    if (button) {
+                        button.className = `bell-button ${type}-${index} ${alarmStates[key] ? '' : 'inactive'}`;
+                    }
+                });
+                
+                addLog('設定已載入');
+            } else {
+                // 預設全部啟用
+                for (let i = 0; i < 8; i++) {
+                    alarmStates[`start-${i}`] = true;
+                    alarmStates[`end-${i}`] = true;
+                }
+                // 設定預設鈴聲
+                soundLists.start.push({ 
+                    type: 'url', 
+                    value: 'https://www.desh.hc.edu.tw/ischool/public/resource_view/open.php?file=1845edb62d768bb482efa8e2d80769b7.mp3', 
+                    display: '預設上課鈴聲' 
+                });
+                soundLists.end.push({ 
+                    type: 'url', 
+                    value: 'https://www.desh.hc.edu.tw/ischool/public/resource_view/open.php?file=90f0daff67f12a99970436a11b43095a.mp3', 
+                    display: '預設下課鈴聲' 
+                });
+                renderPlaylist('start');
+                renderPlaylist('end');
+            }
+            updateNextAlarm();
+        }
+
+        // 添加日誌
+        function addLog(message) {
+            const logContent = document.getElementById('logContent');
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('zh-TW', { hour12: false });
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${timeStr}] ${message}`;
+            logContent.insertBefore(entry, logContent.firstChild);
+            
+            // 保持最多20條記錄
+            while (logContent.children.length > 20) {
+                logContent.removeChild(logContent.lastChild);
+            }
+        }
+        
+        // 請求通知權限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // 頁面載入完成後初始化
+        window.onload = init;
+  </script>
+</body>
+</html>
+
+
