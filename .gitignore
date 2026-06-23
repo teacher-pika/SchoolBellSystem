@@ -17,8 +17,12 @@ logs/
 *.bak
 *.tmp
 
-# --- 編輯器 / 作業系統 ---
+# --- 內部開發文件（不公開）---
+doc/
+
+# --- 編輯器 / 工具 / 作業系統 ---
 .vscode/
+.claude/
 .idea/
 .DS_Store
 Thumbs.db
