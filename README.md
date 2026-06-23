@@ -179,5 +179,3 @@ bellring/
 > `build/`, `dist/`, `__pycache__/`, `logs/`, and `doc/` are build artifacts and internal docs, excluded from version control via `.gitignore`.
 
 ---
-
-*Powered by 皮卡賴*
