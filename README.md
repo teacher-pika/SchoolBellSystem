@@ -2,7 +2,7 @@
 
 🌐 **線上 Demo / Live Demo**：<https://codepen.io/fqafqpbj-the-bashful/full/myVGmqw>
 
-`🇹🇼 中文` ｜ [`🇬🇧 English`](#english)
+`Chinese中文` ｜ [`English`](#english)
 
 ---
 
@@ -94,7 +94,7 @@ bellring/
 
 🌐 **Live Demo**：<https://codepen.io/fqafqpbj-the-bashful/full/myVGmqw>
 
-[`🇹🇼 中文`](#學校鬧鐘系統-school-bell-system) ｜ `🇬🇧 English`
+[`Chinese中文`](#學校鬧鐘系統-school-bell-system) ｜ `English`
 
 ---
 
